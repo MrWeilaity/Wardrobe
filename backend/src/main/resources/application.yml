@@ -19,8 +19,7 @@ spring:
   
   sql:
     init:
-      mode: always
-      data-locations: classpath:data.sql
+      mode: never
       encoding: UTF-8
 
 server:
@@ -31,3 +30,13 @@ server:
 jwt:
   secret: SmartWardrobeSecretKeyForJWTTokenGeneration2024SmartWardrobeSecretKeyForJWTTokenGeneration2024SecureKey
   expiration: 86400000  # 24 hours in milliseconds
+
+# File upload configuration
+file:
+  upload:
+    path: uploads/
+
+spring.servlet.multipart:
+  enabled: true
+  max-file-size: 5MB
+  max-request-size: 10MB

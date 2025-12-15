@@ -13,4 +13,8 @@ public interface ClothingRepository extends JpaRepository<Clothing, Long> {
     List<Clothing> findByUserAndCategory(User user, String category);
     List<Clothing> findByUserAndStatus(User user, String status);
     List<Clothing> findByUserAndSeason(User user, String season);
+    
+    // Admin methods
+    Long countByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

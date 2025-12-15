@@ -72,7 +72,9 @@ export default {
           username: response.data.username,
           email: response.data.email
         }))
-        this.$router.push('/')
+        
+        // Navigate to home page - navbar will update via computed property
+        await this.$router.push('/')
       } catch (error) {
         this.error = error.response?.data || '登录失败，请检查用户名和密码'
       } finally {
