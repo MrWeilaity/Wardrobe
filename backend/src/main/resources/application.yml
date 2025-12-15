@@ -3,7 +3,7 @@ spring:
     name: smart-wardrobe
 
   datasource:
-    url: jdbc:mysql://localhost:3306/wardrobe?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://wardrobe_mysql:3306/wardrobe?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.jdbc.Driver
     username: root
     password: 123456
