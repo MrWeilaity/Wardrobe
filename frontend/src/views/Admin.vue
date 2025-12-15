@@ -83,8 +83,8 @@
               <td>{{ user.username }}</td>
               <td>{{ user.email }}</td>
               <td>
-                <span v-if="isUserAdmin(user)" class="role-badge admin">管理员</span>
-                <span v-else class="role-badge user">用户</span>
+                <span v-if="isUserAdmin(user)" class="role-badge admin">🔴 管理员</span>
+                <span v-else class="role-badge user">🔵 用户</span>
               </td>
               <td>{{ formatDate(user.createdAt) }}</td>
               <td>{{ user.clothingCount }}</td>
