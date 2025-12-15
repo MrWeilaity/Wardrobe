@@ -11,4 +11,8 @@ import java.util.List;
 public interface TravelPlanRepository extends JpaRepository<TravelPlan, Long> {
     List<TravelPlan> findByUser(User user);
     List<TravelPlan> findByUserOrderByStartDateDesc(User user);
+    
+    // Admin methods
+    Long countByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

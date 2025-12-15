@@ -72,7 +72,11 @@ export default {
           username: response.data.username,
           email: response.data.email
         }))
-        this.$router.push('/')
+        
+        // Force navigation with proper redirect
+        await this.$router.push('/')
+        // Reload to ensure navbar updates
+        window.location.reload()
       } catch (error) {
         this.error = error.response?.data || '登录失败，请检查用户名和密码'
       } finally {

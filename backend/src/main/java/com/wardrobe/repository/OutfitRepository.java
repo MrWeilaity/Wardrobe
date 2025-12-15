@@ -11,4 +11,8 @@ import java.util.List;
 public interface OutfitRepository extends JpaRepository<Outfit, Long> {
     List<Outfit> findByUser(User user);
     List<Outfit> findByUserAndOccasion(User user, String occasion);
+    
+    // Admin methods
+    Long countByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

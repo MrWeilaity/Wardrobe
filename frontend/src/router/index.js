@@ -4,6 +4,7 @@ import Register from '../views/Register.vue'
 import Wardrobe from '../views/Wardrobe.vue'
 import Outfits from '../views/Outfits.vue'
 import TravelPlans from '../views/TravelPlans.vue'
+import Admin from '../views/Admin.vue'
 
 const routes = [
   {
@@ -32,6 +33,12 @@ const routes = [
     path: '/travel-plans',
     name: 'TravelPlans',
     component: TravelPlans,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: Admin,
     meta: { requiresAuth: true }
   }
 ]

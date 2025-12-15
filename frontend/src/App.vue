@@ -9,6 +9,7 @@
           <router-link to="/" class="nav-link">我的衣橱</router-link>
           <router-link to="/outfits" class="nav-link">穿搭方案</router-link>
           <router-link to="/travel-plans" class="nav-link">旅行计划</router-link>
+          <router-link to="/admin" class="nav-link">管理面板</router-link>
           <button @click="logout" class="logout-btn">退出</button>
         </div>
       </div>
@@ -39,25 +40,25 @@ export default {
 
 <style>
 :root {
-  /* Feminine color palette - soft pinks, roses, and warm neutrals */
-  --primary-color: #E8A0A0;  /* Soft rose pink */
-  --primary-light: #F5C7C7;  /* Light dusty pink */
-  --primary-dark: #D67B7B;   /* Deeper rose */
-  --secondary-color: #D4A5A5; /* Mauve rose */
-  --accent-color: #C9A0A0;    /* Muted rose */
+  /* Morandi Earth-tone palette - natural, cotton-linen aesthetic */
+  --primary-color: #B8A398;    /* Warm taupe - main earthy tone */
+  --primary-light: #D4C4B7;    /* Light beige - soft cotton */
+  --primary-dark: #9D8B7F;     /* Dark taupe - grounded earth */
+  --secondary-color: #C9B8A8;  /* Sandy beige - natural linen */
+  --accent-color: #A8998A;     /* Muted clay - subtle accent */
   
-  --background: #FFF5F5;      /* Very soft pink-white */
+  --background: #F5F1ED;       /* Soft ivory - cotton white */
   --card-bg: #FFFFFF;
-  --text-primary: #5A3A3A;    /* Warm brown */
-  --text-secondary: #8B6B6B;  /* Lighter warm brown */
-  --border-color: #E8D7D7;    /* Soft pink-grey */
+  --text-primary: #4A4034;     /* Deep warm brown - natural text */
+  --text-secondary: #7A6F63;   /* Medium warm grey - secondary text */
+  --border-color: #E3D9CE;     /* Soft sand - gentle borders */
   
-  --success: #A8C9A8;         /* Soft sage green */
-  --warning: #F0C8A0;         /* Soft peach */
-  --danger: #E8A0A0;          /* Matches primary */
+  --success: #A8B5A0;          /* Sage grey-green - muted success */
+  --warning: #D4B896;          /* Warm sand - gentle warning */
+  --danger: #C4A090;           /* Muted terracotta - soft alert */
   
-  --shadow: 0 2px 8px rgba(232, 160, 160, 0.15);
-  --shadow-hover: 0 4px 16px rgba(232, 160, 160, 0.25);
+  --shadow: 0 2px 8px rgba(184, 163, 152, 0.15);
+  --shadow-hover: 0 4px 16px rgba(184, 163, 152, 0.25);
 }
 
 * {
@@ -248,15 +249,47 @@ body {
   .nav-container {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .nav-brand h1 {
+    font-size: 1.25rem;
+    text-align: center;
   }
   
   .nav-links {
     flex-wrap: wrap;
     justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+  }
+  
+  .nav-link {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .logout-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
   }
   
   .main-content {
     padding: 0 1rem;
+    margin: 1rem auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .nav-link,
+  .logout-btn {
+    width: 100%;
+    text-align: center;
   }
 }
 </style>
