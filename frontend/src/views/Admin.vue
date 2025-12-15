@@ -514,6 +514,42 @@
         </div>
       </div>
     </div>
+
+    <!-- Error Modal -->
+    <div v-if="showErrorModal" class="modal" @click.self="closeErrorModal">
+      <div class="modal-content error-modal">
+        <button @click="closeErrorModal" class="modal-close">✕</button>
+        <div class="error-icon">⚠️</div>
+        <h3>错误</h3>
+        <p class="error-message">{{ errorMessage }}</p>
+        <button @click="closeErrorModal" class="btn btn-primary">确定</button>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div v-if="showSuccessModal" class="modal" @click.self="closeSuccessModal">
+      <div class="modal-content success-modal">
+        <button @click="closeSuccessModal" class="modal-close">✕</button>
+        <div class="success-icon">✅</div>
+        <h3>成功</h3>
+        <p class="success-message">{{ successMessage }}</p>
+        <button @click="closeSuccessModal" class="btn btn-primary">确定</button>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div v-if="showConfirmModal" class="modal" @click.self="closeConfirmModal">
+      <div class="modal-content confirm-modal">
+        <button @click="closeConfirmModal" class="modal-close">✕</button>
+        <div class="confirm-icon">❓</div>
+        <h3>确认操作</h3>
+        <p class="confirm-message">{{ confirmMessage }}</p>
+        <div class="confirm-buttons">
+          <button @click="closeConfirmModal" class="btn btn-secondary">取消</button>
+          <button @click="handleConfirm" class="btn btn-primary">确定</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -574,7 +610,17 @@ export default {
         activitiesLast7Days: 0,
         activitiesLast30Days: 0
       },
-      isRefreshing: false
+      isRefreshing: false,
+      // Error modal
+      showErrorModal: false,
+      errorMessage: '',
+      // Confirm modal
+      showConfirmModal: false,
+      confirmMessage: '',
+      confirmCallback: null,
+      // Success modal
+      showSuccessModal: false,
+      successMessage: ''
     }
   },
   mounted() {
@@ -602,7 +648,7 @@ export default {
         })
       } catch (error) {
         console.error('Failed to load stats:', error)
-        alert('加载统计数据失败')
+        this.showError('加载统计数据失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       }
     },
     
@@ -614,7 +660,7 @@ export default {
         this.filterUsers()
       } catch (error) {
         console.error('Failed to load users:', error)
-        alert('加载用户列表失败')
+        this.showError('加载用户列表失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       } finally {
         this.loadingUsers = false
       }
@@ -688,7 +734,7 @@ export default {
 
     exportUsersToCSV() {
       if (this.filteredUsers.length === 0) {
-        alert('没有数据可以导出')
+        this.showError('没有数据可以导出')
         return
       }
 
@@ -706,23 +752,21 @@ export default {
       
       const filename = `用户数据_${new Date().toISOString().split('T')[0]}.csv`
       this.downloadCSV(header, rows, filename)
-      alert('用户数据已导出')
+      this.showSuccess('用户数据已导出')
     },
     
     async deleteUser(userId) {
-      if (!confirm('确定要删除该用户吗？此操作不可恢复！')) {
-        return
-      }
-      
-      try {
-        await axios.delete(`/admin/users/${userId}`)
-        this.loadUsers()
-        this.loadStats()
-        alert('用户已删除')
-      } catch (error) {
-        console.error('Failed to delete user:', error)
-        alert('删除用户失败: ' + (error.response?.data || '未知错误'))
-      }
+      this.showConfirm('确定要删除该用户吗？此操作不可恢复！', async () => {
+        try {
+          await axios.delete(`/admin/users/${userId}`)
+          this.loadUsers()
+          this.loadStats()
+          this.showSuccess('用户已删除')
+        } catch (error) {
+          console.error('Failed to delete user:', error)
+          this.showError('删除用户失败: ' + (error.response?.data || '未知错误'))
+        }
+      })
     },
 
     async loadAllClothing() {
@@ -732,7 +776,7 @@ export default {
         this.allClothing = response.data
       } catch (error) {
         console.error('Failed to load clothing:', error)
-        alert('加载衣物数据失败')
+        this.showError('加载衣柜数据失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       } finally {
         this.loadingClothing = false
       }
@@ -745,7 +789,7 @@ export default {
         this.allOutfits = response.data
       } catch (error) {
         console.error('Failed to load outfits:', error)
-        alert('加载穿搭数据失败')
+        this.showError('加载穿搭数据失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       } finally {
         this.loadingOutfits = false
       }
@@ -758,7 +802,7 @@ export default {
         this.allTravelPlans = response.data
       } catch (error) {
         console.error('Failed to load travel plans:', error)
-        alert('加载旅行计划数据失败')
+        this.showError('加载出行计划数据失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       } finally {
         this.loadingTravelPlans = false
       }
@@ -771,7 +815,7 @@ export default {
         this.showDetailsModal = true
       } catch (error) {
         console.error('Failed to load user details:', error)
-        alert('加载用户详情失败')
+        this.showError('加载用户详情失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       }
     },
 
@@ -783,7 +827,7 @@ export default {
         this.showDetailsModal = false
       } catch (error) {
         console.error('Failed to load user clothing:', error)
-        alert('加载用户衣物失败')
+        this.showError('加载用户衣物失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       }
     },
 
@@ -794,21 +838,19 @@ export default {
         ? `确定要移除 ${user.username} 的管理员权限吗？`
         : `确定要授予 ${user.username} 管理员权限吗？`
 
-      if (!confirm(confirmMessage)) {
-        return
-      }
-
-      try {
-        await axios.put(`/admin/users/${user.id}/role`, {
-          action: action,
-          role: 'ROLE_ADMIN'
-        })
-        this.loadUsers()
-        alert(isAdmin ? '管理员权限已移除' : '管理员权限已授予')
-      } catch (error) {
-        console.error('Failed to update user role:', error)
-        alert('更新用户角色失败: ' + (error.response?.data || '未知错误'))
-      }
+      this.showConfirm(confirmMessage, async () => {
+        try {
+          await axios.put(`/admin/users/${user.id}/role`, {
+            action: action,
+            role: 'ROLE_ADMIN'
+          })
+          this.loadUsers()
+          this.showSuccess(isAdmin ? '管理员权限已移除' : '管理员权限已授予')
+        } catch (error) {
+          console.error('Failed to update user role:', error)
+          this.showError('更新用户角色失败: ' + (error.response?.data || '未知错误'))
+        }
+      })
     },
 
     isUserAdmin(user) {
@@ -833,7 +875,7 @@ export default {
         this.showOutfitDetailsModal = true
       } catch (error) {
         console.error('Failed to load outfit details:', error)
-        alert('加载穿搭详情失败')
+        this.showError('加载穿搭详情失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       }
     },
 
@@ -849,13 +891,52 @@ export default {
         this.showTravelPlanDetailsModal = true
       } catch (error) {
         console.error('Failed to load travel plan details:', error)
-        alert('加载旅行计划详情失败')
+        this.showError('加载旅行计划详情失败: ' + (error.response?.data?.message || error.message || '未知错误'))
       }
     },
 
     closeTravelPlanDetailsModal() {
       this.showTravelPlanDetailsModal = false
       this.selectedTravelPlan = null
+    },
+
+    showError(message) {
+      this.errorMessage = message
+      this.showErrorModal = true
+    },
+
+    closeErrorModal() {
+      this.showErrorModal = false
+      this.errorMessage = ''
+    },
+
+    showSuccess(message) {
+      this.successMessage = message
+      this.showSuccessModal = true
+    },
+
+    closeSuccessModal() {
+      this.showSuccessModal = false
+      this.successMessage = ''
+    },
+
+    showConfirm(message, callback) {
+      this.confirmMessage = message
+      this.confirmCallback = callback
+      this.showConfirmModal = true
+    },
+
+    closeConfirmModal() {
+      this.showConfirmModal = false
+      this.confirmMessage = ''
+      this.confirmCallback = null
+    },
+
+    async handleConfirm() {
+      if (this.confirmCallback) {
+        await this.confirmCallback()
+      }
+      this.closeConfirmModal()
     },
     
     formatDate,
@@ -885,7 +966,7 @@ export default {
 
     exportClothingToCSV() {
       if (this.allClothing.length === 0) {
-        alert('没有衣物数据可以导出')
+        this.showError('没有衣物数据可以导出')
         return
       }
 
@@ -904,7 +985,7 @@ export default {
       
       const filename = `衣物数据_${new Date().toISOString().split('T')[0]}.csv`
       this.downloadCSV(header, rows, filename)
-      alert('衣物数据已导出')
+      this.showSuccess('衣物数据已导出')
     },
 
     calculateActiveUserRate() {
@@ -951,10 +1032,10 @@ export default {
           this.loadActivityLogs(),
           this.loadGrowthStats()
         ])
-        alert('✅ 所有数据已刷新')
+        this.showSuccess('✅ 所有数据已刷新')
       } catch (error) {
         console.error('Failed to refresh data:', error)
-        alert('❌ 刷新失败，请重试')
+        this.showError('❌ 刷新失败，请重试')
       } finally {
         this.isRefreshing = false
       }
@@ -1672,6 +1753,38 @@ tbody tr:hover {
 .log-time {
   color: var(--text-secondary);
   font-size: 0.75rem;
+}
+
+.error-modal,
+.success-modal,
+.confirm-modal {
+  text-align: center;
+}
+
+.error-icon,
+.success-icon,
+.confirm-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.error-message,
+.success-message,
+.confirm-message {
+  color: var(--text-secondary);
+  margin: 1rem 0 1.5rem 0;
+  line-height: 1.6;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.modal {
+  backdrop-filter: blur(2px);
 }
 
 @media (max-width: 768px) {
