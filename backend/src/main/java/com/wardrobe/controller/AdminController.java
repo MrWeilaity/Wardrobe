@@ -2,8 +2,10 @@ package com.wardrobe.controller;
 
 import com.wardrobe.dto.SystemStatsResponse;
 import com.wardrobe.dto.UserResponse;
+import com.wardrobe.model.ActivityLog;
 import com.wardrobe.model.Clothing;
 import com.wardrobe.model.User;
+import com.wardrobe.repository.ActivityLogRepository;
 import com.wardrobe.repository.ClothingRepository;
 import com.wardrobe.repository.OutfitRepository;
 import com.wardrobe.repository.TravelPlanRepository;
@@ -14,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,6 +37,9 @@ public class AdminController {
 
     @Autowired
     private TravelPlanRepository travelPlanRepository;
+
+    @Autowired
+    private ActivityLogRepository activityLogRepository;
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -197,5 +203,46 @@ public class AdminController {
     public ResponseEntity<List<Clothing>> getUserClothing(@PathVariable Long userId) {
         List<Clothing> clothing = clothingRepository.findByUserId(userId);
         return ResponseEntity.ok(clothing);
+    }
+
+    @GetMapping("/activity-logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ActivityLog>> getActivityLogs() {
+        try {
+            List<ActivityLog> logs = activityLogRepository.findTop50ByOrderByCreatedAtDesc();
+            return ResponseEntity.ok(logs);
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+
+    @GetMapping("/stats/growth")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getGrowthStats() {
+        Map<String, Object> growthStats = new HashMap<>();
+        
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime last7Days = now.minusDays(7);
+        LocalDateTime last30Days = now.minusDays(30);
+        
+        // Count new users in last 7 and 30 days using optimized queries
+        long newUsersLast7Days = userRepository.countByCreatedAtAfter(last7Days);
+        long newUsersLast30Days = userRepository.countByCreatedAtAfter(last30Days);
+        
+        growthStats.put("newUsersLast7Days", newUsersLast7Days);
+        growthStats.put("newUsersLast30Days", newUsersLast30Days);
+        
+        // Activity counts
+        try {
+            long activitiesLast7Days = activityLogRepository.countByCreatedAtAfter(last7Days);
+            long activitiesLast30Days = activityLogRepository.countByCreatedAtAfter(last30Days);
+            growthStats.put("activitiesLast7Days", activitiesLast7Days);
+            growthStats.put("activitiesLast30Days", activitiesLast30Days);
+        } catch (Exception e) {
+            growthStats.put("activitiesLast7Days", 0);
+            growthStats.put("activitiesLast30Days", 0);
+        }
+        
+        return ResponseEntity.ok(growthStats);
     }
 }
