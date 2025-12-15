@@ -63,10 +63,9 @@ public class OutfitController {
         List<Clothing> clothingItems = new ArrayList<>();
         if (request.getClothingItemIds() != null && !request.getClothingItemIds().isEmpty()) {
             for (Long clothingId : request.getClothingItemIds()) {
-                Clothing clothing = clothingRepository.findById(clothingId).orElse(null);
-                if (clothing != null && clothing.getUser().getId().equals(user.getId())) {
-                    clothingItems.add(clothing);
-                }
+                clothingRepository.findById(clothingId)
+                    .filter(clothing -> clothing.getUser().getId().equals(user.getId()))
+                    .ifPresent(clothingItems::add);
             }
         }
         outfit.setClothingItems(clothingItems);
@@ -94,10 +93,9 @@ public class OutfitController {
         List<Clothing> clothingItems = new ArrayList<>();
         if (request.getClothingItemIds() != null && !request.getClothingItemIds().isEmpty()) {
             for (Long clothingId : request.getClothingItemIds()) {
-                Clothing clothing = clothingRepository.findById(clothingId).orElse(null);
-                if (clothing != null && clothing.getUser().getId().equals(user.getId())) {
-                    clothingItems.add(clothing);
-                }
+                clothingRepository.findById(clothingId)
+                    .filter(clothing -> clothing.getUser().getId().equals(user.getId()))
+                    .ifPresent(clothingItems::add);
             }
         }
         outfit.setClothingItems(clothingItems);
