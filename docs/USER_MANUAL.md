@@ -145,7 +145,7 @@ docker compose ps
 echo ""
 echo "🔍 检查MySQL数据库..."
 for i in {1..30}; do
-    if docker compose exec -T mysql mysqladmin ping -h localhost -u root -p\${MYSQL_ROOT_PASSWORD} --silent 2>/dev/null; then
+    if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot --silent 2>/dev/null; then
         echo "✅ MySQL数据库就绪"
         break
     fi
@@ -1525,7 +1525,7 @@ fi
 
 # 检查MySQL
 echo -n "MySQL数据库: "
-if docker compose exec -T mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot --silent 2>/dev/null; then
     echo "✅ 正常"
 else
     echo "❌ 异常"
