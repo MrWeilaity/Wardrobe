@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/admin")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     @Autowired
@@ -35,6 +36,7 @@ public class AdminController {
     private TravelPlanRepository travelPlanRepository;
 
     @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userRepository.findAll();
         List<UserResponse> userResponses = users.stream().map(user -> {
@@ -42,6 +44,7 @@ public class AdminController {
             response.setId(user.getId());
             response.setUsername(user.getUsername());
             response.setEmail(user.getEmail());
+            response.setRoles(user.getRoles());
             response.setCreatedAt(user.getCreatedAt());
             
             // Count user's items
@@ -56,6 +59,7 @@ public class AdminController {
     }
 
     @GetMapping("/stats")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SystemStatsResponse> getSystemStats() {
         SystemStatsResponse stats = new SystemStatsResponse();
         
@@ -97,6 +101,7 @@ public class AdminController {
 
     @DeleteMapping("/users/{userId}")
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         if (!userRepository.existsById(userId)) {
             return ResponseEntity.notFound().build();
@@ -126,6 +131,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/{userId}/details")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUserDetails(@PathVariable Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (!userOpt.isPresent()) {
@@ -137,11 +143,59 @@ public class AdminController {
         response.setId(user.getId());
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
+        response.setRoles(user.getRoles());
         response.setCreatedAt(user.getCreatedAt());
         response.setClothingCount(clothingRepository.countByUserId(user.getId()));
         response.setOutfitCount(outfitRepository.countByUserId(user.getId()));
         response.setTravelPlanCount(travelPlanRepository.countByUserId(user.getId()));
 
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/users/{userId}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateUserRole(@PathVariable Long userId, @RequestBody Map<String, String> request) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = userOpt.get();
+        String action = request.get("action"); // "add" or "remove"
+        String role = request.get("role"); // "ROLE_ADMIN" or "ROLE_USER"
+
+        if (action == null || role == null) {
+            return ResponseEntity.badRequest().body("Action and role are required");
+        }
+
+        Set<String> roles = user.getRoles();
+        if ("add".equals(action)) {
+            roles.add(role);
+        } else if ("remove".equals(action)) {
+            roles.remove(role);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid action");
+        }
+
+        user.setRoles(roles);
+        userRepository.save(user);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "User role updated successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/clothing")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Clothing>> getAllClothing() {
+        List<Clothing> clothing = clothingRepository.findAll();
+        return ResponseEntity.ok(clothing);
+    }
+
+    @GetMapping("/users/{userId}/clothing")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Clothing>> getUserClothing(@PathVariable Long userId) {
+        List<Clothing> clothing = clothingRepository.findByUserId(userId);
+        return ResponseEntity.ok(clothing);
     }
 }

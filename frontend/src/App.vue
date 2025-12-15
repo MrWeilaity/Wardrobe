@@ -9,7 +9,7 @@
           <router-link to="/" class="nav-link">我的衣橱</router-link>
           <router-link to="/outfits" class="nav-link">穿搭方案</router-link>
           <router-link to="/travel-plans" class="nav-link">旅行计划</router-link>
-          <router-link to="/admin" class="nav-link">管理面板</router-link>
+          <router-link v-if="isAdmin" to="/admin" class="nav-link">管理面板</router-link>
           <button @click="logout" class="logout-btn">退出</button>
         </div>
       </div>
@@ -25,7 +25,8 @@ export default {
   name: 'App',
   data() {
     return {
-      isAuthenticated: false
+      isAuthenticated: false,
+      isAdmin: false
     }
   },
   mounted() {
@@ -41,11 +42,25 @@ export default {
   methods: {
     updateAuthState() {
       this.isAuthenticated = !!localStorage.getItem('token')
+      
+      // Check if user has ROLE_ADMIN
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr)
+          this.isAdmin = user.roles && user.roles.includes('ROLE_ADMIN')
+        } catch (e) {
+          this.isAdmin = false
+        }
+      } else {
+        this.isAdmin = false
+      }
     },
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       this.isAuthenticated = false
+      this.isAdmin = false
       this.$router.push('/login')
     }
   }

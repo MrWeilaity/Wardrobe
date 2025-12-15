@@ -39,7 +39,7 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: Admin,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, requiresAdmin: true }
   }
 ]
 
@@ -55,6 +55,24 @@ router.beforeEach((to, from, next) => {
     next('/login')
   } else if ((to.path === '/login' || to.path === '/register') && isAuthenticated) {
     next('/')
+  } else if (to.meta.requiresAdmin) {
+    // Check if user has ROLE_ADMIN
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr)
+        if (user.roles && user.roles.includes('ROLE_ADMIN')) {
+          next()
+        } else {
+          // User is authenticated but not admin
+          next('/')
+        }
+      } catch (e) {
+        next('/')
+      }
+    } else {
+      next('/login')
+    }
   } else {
     next()
   }

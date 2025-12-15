@@ -70,7 +70,8 @@ export default {
         localStorage.setItem('user', JSON.stringify({
           id: response.data.id,
           username: response.data.username,
-          email: response.data.email
+          email: response.data.email,
+          roles: response.data.roles || []
         }))
         
         // Navigate to home page - navbar will update via computed property

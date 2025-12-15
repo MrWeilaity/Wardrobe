@@ -54,7 +54,12 @@
 
     <!-- User Management -->
     <div class="users-section card">
-      <h3>用户管理</h3>
+      <div class="section-header">
+        <h3>用户管理</h3>
+        <button @click="showUserModal = true" class="btn btn-primary">
+          ➕ 添加管理员权限
+        </button>
+      </div>
       <div v-if="loadingUsers" class="loading">加载中...</div>
       <div v-else-if="users.length === 0" class="empty-state">暂无用户</div>
       <div v-else class="users-table">
@@ -64,6 +69,7 @@
               <th>ID</th>
               <th>用户名</th>
               <th>邮箱</th>
+              <th>角色</th>
               <th>注册时间</th>
               <th>衣物数</th>
               <th>穿搭数</th>
@@ -76,16 +82,118 @@
               <td>{{ user.id }}</td>
               <td>{{ user.username }}</td>
               <td>{{ user.email }}</td>
+              <td>
+                <span v-if="isUserAdmin(user)" class="role-badge admin">管理员</span>
+                <span v-else class="role-badge user">用户</span>
+              </td>
               <td>{{ formatDate(user.createdAt) }}</td>
               <td>{{ user.clothingCount }}</td>
               <td>{{ user.outfitCount }}</td>
               <td>{{ user.travelPlanCount }}</td>
               <td>
-                <button @click="deleteUser(user.id)" class="btn-delete">删除</button>
+                <div class="action-buttons">
+                  <button @click="viewUserDetails(user.id)" class="btn-icon" title="查看详情">👁️</button>
+                  <button @click="toggleAdminRole(user)" class="btn-icon" title="切换管理员权限">
+                    {{ isUserAdmin(user) ? '⬇️' : '⬆️' }}
+                  </button>
+                  <button @click="deleteUser(user.id)" class="btn-delete" title="删除用户">🗑️</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- All Clothing Management -->
+    <div class="clothing-section card">
+      <div class="section-header">
+        <h3>全部衣物管理</h3>
+        <button @click="loadAllClothing" class="btn btn-secondary">
+          🔄 刷新衣物列表
+        </button>
+      </div>
+      <div v-if="loadingClothing" class="loading">加载中...</div>
+      <div v-else-if="allClothing.length === 0" class="empty-state">暂无衣物数据</div>
+      <div v-else class="clothing-grid">
+        <div v-for="item in allClothing.slice(0, 20)" :key="item.id" class="clothing-item">
+          <div class="clothing-image">
+            <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" />
+            <div v-else class="no-image">👔</div>
+          </div>
+          <div class="clothing-details">
+            <h4>{{ item.name }}</h4>
+            <p class="clothing-meta">
+              <span class="category-tag">{{ item.category }}</span>
+              <span class="color-tag">{{ item.color }}</span>
+            </p>
+            <p class="clothing-owner">所属用户 ID: {{ item.userId }}</p>
+          </div>
+        </div>
+      </div>
+      <p v-if="allClothing.length > 20" class="show-more">
+        显示前20条，共 {{ allClothing.length }} 条记录
+      </p>
+    </div>
+
+    <!-- User Details Modal -->
+    <div v-if="showDetailsModal" class="modal" @click.self="closeDetailsModal">
+      <div class="modal-content">
+        <button @click="closeDetailsModal" class="modal-close">✕</button>
+        <h3>用户详细信息</h3>
+        <div v-if="selectedUserDetails" class="user-details">
+          <div class="detail-row">
+            <span class="detail-label">用户名：</span>
+            <span class="detail-value">{{ selectedUserDetails.username }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">邮箱：</span>
+            <span class="detail-value">{{ selectedUserDetails.email }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">注册时间：</span>
+            <span class="detail-value">{{ formatDate(selectedUserDetails.createdAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">衣物数量：</span>
+            <span class="detail-value">{{ selectedUserDetails.clothingCount }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">穿搭方案：</span>
+            <span class="detail-value">{{ selectedUserDetails.outfitCount }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">旅行计划：</span>
+            <span class="detail-value">{{ selectedUserDetails.travelPlanCount }}</span>
+          </div>
+          <button @click="viewUserClothing(selectedUserDetails.id)" class="btn btn-primary">
+            查看该用户的所有衣物
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Clothing Modal -->
+    <div v-if="showUserClothingModal" class="modal" @click.self="closeUserClothingModal">
+      <div class="modal-content large">
+        <button @click="closeUserClothingModal" class="modal-close">✕</button>
+        <h3>用户衣物列表</h3>
+        <div v-if="userClothing.length === 0" class="empty-state">该用户暂无衣物</div>
+        <div v-else class="clothing-grid">
+          <div v-for="item in userClothing" :key="item.id" class="clothing-item">
+            <div class="clothing-image">
+              <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" />
+              <div v-else class="no-image">👔</div>
+            </div>
+            <div class="clothing-details">
+              <h4>{{ item.name }}</h4>
+              <p class="clothing-meta">
+                <span class="category-tag">{{ item.category }}</span>
+                <span class="color-tag">{{ item.color }}</span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -112,6 +220,13 @@ export default {
       },
       users: [],
       loadingUsers: false,
+      allClothing: [],
+      loadingClothing: false,
+      showDetailsModal: false,
+      showUserClothingModal: false,
+      showUserModal: false,
+      selectedUserDetails: null,
+      userClothing: [],
       charts: {
         category: null,
         color: null,
@@ -122,6 +237,7 @@ export default {
   mounted() {
     this.loadStats()
     this.loadUsers()
+    this.loadAllClothing()
   },
   beforeUnmount() {
     // Destroy charts to prevent memory leaks
@@ -168,8 +284,83 @@ export default {
         alert('用户已删除')
       } catch (error) {
         console.error('Failed to delete user:', error)
-        alert('删除用户失败')
+        alert('删除用户失败: ' + (error.response?.data || '未知错误'))
       }
+    },
+
+    async loadAllClothing() {
+      this.loadingClothing = true
+      try {
+        const response = await axios.get('/admin/clothing')
+        this.allClothing = response.data
+      } catch (error) {
+        console.error('Failed to load clothing:', error)
+        alert('加载衣物数据失败')
+      } finally {
+        this.loadingClothing = false
+      }
+    },
+
+    async viewUserDetails(userId) {
+      try {
+        const response = await axios.get(`/admin/users/${userId}/details`)
+        this.selectedUserDetails = response.data
+        this.showDetailsModal = true
+      } catch (error) {
+        console.error('Failed to load user details:', error)
+        alert('加载用户详情失败')
+      }
+    },
+
+    async viewUserClothing(userId) {
+      try {
+        const response = await axios.get(`/admin/users/${userId}/clothing`)
+        this.userClothing = response.data
+        this.showUserClothingModal = true
+        this.showDetailsModal = false
+      } catch (error) {
+        console.error('Failed to load user clothing:', error)
+        alert('加载用户衣物失败')
+      }
+    },
+
+    async toggleAdminRole(user) {
+      const isAdmin = this.isUserAdmin(user)
+      const action = isAdmin ? 'remove' : 'add'
+      const confirmMessage = isAdmin 
+        ? `确定要移除 ${user.username} 的管理员权限吗？`
+        : `确定要授予 ${user.username} 管理员权限吗？`
+
+      if (!confirm(confirmMessage)) {
+        return
+      }
+
+      try {
+        await axios.put(`/admin/users/${user.id}/role`, {
+          action: action,
+          role: 'ROLE_ADMIN'
+        })
+        this.loadUsers()
+        alert(isAdmin ? '管理员权限已移除' : '管理员权限已授予')
+      } catch (error) {
+        console.error('Failed to update user role:', error)
+        alert('更新用户角色失败: ' + (error.response?.data || '未知错误'))
+      }
+    },
+
+    isUserAdmin(user) {
+      // Check if user response has roles field (from backend)
+      return user.roles && user.roles.includes('ROLE_ADMIN')
+    },
+
+    closeDetailsModal() {
+      this.showDetailsModal = false
+      this.selectedUserDetails = null
+    },
+
+    closeUserClothingModal() {
+      this.showUserClothingModal = false
+      this.userClothing = []
     },
     
     formatDate(dateString) {
@@ -427,6 +618,244 @@ tbody tr:hover {
   color: var(--text-secondary);
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.role-badge.admin {
+  background-color: #FFE5E5;
+  color: #C4A090;
+}
+
+.role-badge.user {
+  background-color: #E8F4F8;
+  color: #7A6F63;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-icon {
+  padding: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: var(--background);
+  border-color: var(--primary-color);
+}
+
+.clothing-section {
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.clothing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.clothing-item {
+  background: var(--background);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clothing-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.clothing-image {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  overflow: hidden;
+}
+
+.clothing-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  font-size: 3rem;
+  color: var(--text-secondary);
+}
+
+.clothing-details {
+  padding: 1rem;
+}
+
+.clothing-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.clothing-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.category-tag,
+.color-tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  background-color: var(--primary-light);
+  color: var(--text-primary);
+}
+
+.clothing-owner {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.show-more {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-content.large {
+  max-width: 900px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--background);
+  border-radius: 8px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detail-value {
+  color: var(--text-secondary);
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+  margin-top: 1rem;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-secondary:hover {
+  opacity: 0.9;
+}
+
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -442,6 +871,20 @@ tbody tr:hover {
   
   th, td {
     padding: 0.5rem;
+  }
+
+  .clothing-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
   }
 }
 </style>
