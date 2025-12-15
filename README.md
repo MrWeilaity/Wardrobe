@@ -54,13 +54,56 @@
 
 ## 快速开始
 
-### 环境要求
+### 🐳 方式一：Docker 部署（推荐）
+
+**最简单的启动方式，一键启动所有服务！**
+
+#### 环境要求
+- Docker 20.10+
+- Docker Compose 2.0+
+
+#### 快速启动
+```bash
+# 一键启动所有服务（MySQL + 后端 + 前端）
+./quick-start.sh
+
+# 或手动启动
+docker compose up -d --build
+```
+
+访问地址：
+- 📱 **前端界面**: http://localhost
+- 🔧 **后端API**: http://localhost:8080/api
+- 🗄️ **MySQL**: localhost:3306
+
+详细的Docker部署文档：[DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+
+#### 常用命令
+```bash
+# 查看服务状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f
+
+# 停止服务
+docker compose down
+
+# 测试图片上传功能
+./test-image-access.sh
+```
+
+---
+
+### 💻 方式二：本地开发环境
+
+#### 环境要求
 - Java 11+
 - Node.js 16+
 - Maven 3.6+
 - **MySQL 5.7**
 
-### 数据库准备
+#### 数据库准备
 
 1. 安装 MySQL 5.7
 2. 创建数据库：
@@ -76,7 +119,7 @@ mysql -u root -p < backend/src/main/resources/schema.sql
 
 详细配置说明：`backend/数据库配置说明.md`
 
-### 启动后端
+#### 启动后端
 
 ```bash
 cd backend
@@ -85,7 +128,7 @@ mvn spring-boot:run
 
 后端服务将在 `http://localhost:8080` 启动
 
-### 启动前端
+#### 启动前端
 
 ```bash
 cd frontend
@@ -151,15 +194,23 @@ Wardrobe/
 └── README.md
 ```
 
+## 已实现功能 ✅
+
+- ✅ 图片上传功能（支持衣物图片上传和显示）
+- ✅ 管理员控制面板
+- ✅ 数据统计和可视化（使用 Chart.js）
+- ✅ 衣物详情查看
+- ✅ Docker 一键部署
+- ✅ 响应式导航栏
+
 ## 未来功能规划
 
-- [ ] 图片上传功能
 - [ ] Canvas 拖拽穿搭面板
 - [ ] 天气API集成，智能推荐穿搭
-- [ ] 数据统计和可视化
 - [ ] 衣物使用频率分析
 - [ ] 环保回收功能
 - [ ] 移动端适配优化
+- [ ] 云存储支持（OSS/S3）
 
 ## 作者
 
