@@ -23,7 +23,7 @@
           <p>👔 衣物：{{ plan.clothingItems?.length || 0 }} 件</p>
         </div>
         <div class="travel-actions">
-          <button @click="viewPlan(plan)" class="btn btn-secondary">查看详情</button>
+          <button @click="viewPlanDetails(plan.id)" class="btn btn-secondary">查看详情</button>
           <button @click="deletePlan(plan.id)" class="btn-icon">🗑️</button>
         </div>
       </div>
@@ -77,6 +77,63 @@
         </form>
       </div>
     </div>
+
+    <!-- Details Modal -->
+    <div v-if="showDetailsModal" class="modal" @click.self="closeDetailsModal">
+      <div class="modal-content large-modal">
+        <button @click="closeDetailsModal" class="modal-close">✕</button>
+        <h3>旅行计划详情</h3>
+        <div v-if="selectedPlan" class="details-section">
+          <div class="detail-row">
+            <span class="detail-label">名称：</span>
+            <span class="detail-value">{{ selectedPlan.name }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">目的地：</span>
+            <span class="detail-value">{{ selectedPlan.destination }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">出发日期：</span>
+            <span class="detail-value">{{ formatDate(selectedPlan.startDate) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">返程日期：</span>
+            <span class="detail-value">{{ formatDate(selectedPlan.endDate) }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedPlan.travelType">
+            <span class="detail-label">旅行类型：</span>
+            <span class="detail-value">{{ selectedPlan.travelType }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedPlan.notes">
+            <span class="detail-label">备注：</span>
+            <span class="detail-value">{{ selectedPlan.notes }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">创建时间：</span>
+            <span class="detail-value">{{ formatDateTime(selectedPlan.createdAt) }}</span>
+          </div>
+          <h4 class="section-title">打包的衣物 ({{ selectedPlan.clothingItems?.length || 0 }}件)</h4>
+          <div v-if="!selectedPlan.clothingItems || selectedPlan.clothingItems.length === 0" class="empty-state">
+            该旅行计划暂无打包衣物
+          </div>
+          <div v-else class="clothing-grid">
+            <div v-for="item in selectedPlan.clothingItems" :key="item.id" class="clothing-card">
+              <div class="clothing-image">
+                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" />
+                <div v-else class="no-image">👔</div>
+              </div>
+              <div class="clothing-info">
+                <h4>{{ item.name }}</h4>
+                <p class="clothing-meta">
+                  <span class="category-badge">{{ item.category }}</span>
+                  <span class="color-badge">{{ item.color }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -90,6 +147,8 @@ export default {
       plans: [],
       loading: false,
       showAddModal: false,
+      showDetailsModal: false,
+      selectedPlan: null,
       form: {
         name: '',
         destination: '',
@@ -127,9 +186,32 @@ export default {
       }
     },
     
-    viewPlan(plan) {
-      alert(`查看旅行计划：${plan.name}`)
-      // TODO: Implement detailed view with clothing selection
+    async viewPlanDetails(planId) {
+      try {
+        const response = await axios.get(`/travel-plans/${planId}`)
+        this.selectedPlan = response.data
+        this.showDetailsModal = true
+      } catch (error) {
+        console.error('Failed to load travel plan details:', error)
+        alert('加载旅行计划详情失败')
+      }
+    },
+
+    closeDetailsModal() {
+      this.showDetailsModal = false
+      this.selectedPlan = null
+    },
+
+    formatDateTime(dateString) {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     },
     
     async deletePlan(id) {
@@ -250,5 +332,126 @@ export default {
   gap: 1rem;
   justify-content: flex-end;
   margin-top: 1.5rem;
+}
+
+.large-modal {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  line-height: 1;
+  z-index: 1;
+}
+
+.modal-close:hover {
+  color: var(--text-primary);
+}
+
+.details-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--background, #FFF5F5);
+  border-radius: 8px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.detail-value {
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.section-title {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.clothing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.clothing-card {
+  background: var(--background, #FFF5F5);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.clothing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.clothing-image {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  overflow: hidden;
+}
+
+.clothing-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-image {
+  font-size: 3rem;
+  color: var(--text-secondary);
+}
+
+.clothing-info {
+  padding: 1rem;
+}
+
+.clothing-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.clothing-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.category-badge,
+.color-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  background-color: rgba(184, 163, 152, 0.2);
+  color: var(--text-primary);
 }
 </style>
