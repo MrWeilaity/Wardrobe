@@ -23,15 +23,29 @@
 <script>
 export default {
   name: 'App',
-  computed: {
-    isAuthenticated() {
-      return !!localStorage.getItem('token')
+  data() {
+    return {
+      isAuthenticated: false
+    }
+  },
+  mounted() {
+    // Initialize authentication state
+    this.updateAuthState()
+  },
+  watch: {
+    // Watch for route changes to update auth state
+    '$route'() {
+      this.updateAuthState()
     }
   },
   methods: {
+    updateAuthState() {
+      this.isAuthenticated = !!localStorage.getItem('token')
+    },
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      this.isAuthenticated = false
       this.$router.push('/login')
     }
   }

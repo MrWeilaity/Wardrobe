@@ -62,6 +62,8 @@ public class FileUploadController {
             Files.write(filePath, file.getBytes());
 
             // Return file URL
+            // Since the frontend uses baseURL '/api' and Spring serves resources under context-path
+            // we return the full path including /api
             String fileUrl = contextPath + "/uploads/" + filename;
             Map<String, String> response = new HashMap<>();
             response.put("url", fileUrl);
