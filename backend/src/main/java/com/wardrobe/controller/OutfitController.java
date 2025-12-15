@@ -1,5 +1,6 @@
 package com.wardrobe.controller;
 
+import com.wardrobe.dto.OutfitRequest;
 import com.wardrobe.model.Clothing;
 import com.wardrobe.model.Outfit;
 import com.wardrobe.model.User;
@@ -12,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -47,17 +49,34 @@ public class OutfitController {
     }
 
     @PostMapping
-    public ResponseEntity<Outfit> createOutfit(@Valid @RequestBody Outfit outfit, 
+    public ResponseEntity<Outfit> createOutfit(@Valid @RequestBody OutfitRequest request, 
                                                Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+        
+        Outfit outfit = new Outfit();
         outfit.setUser(user);
+        outfit.setName(request.getName());
+        outfit.setOccasion(request.getOccasion());
+        outfit.setNotes(request.getNotes());
+        
+        // Fetch clothing items by IDs
+        List<Clothing> clothingItems = new ArrayList<>();
+        if (request.getClothingItemIds() != null && !request.getClothingItemIds().isEmpty()) {
+            for (Long clothingId : request.getClothingItemIds()) {
+                clothingRepository.findById(clothingId)
+                    .filter(clothing -> clothing.getUser().getId().equals(user.getId()))
+                    .ifPresent(clothingItems::add);
+            }
+        }
+        outfit.setClothingItems(clothingItems);
+        
         Outfit savedOutfit = outfitRepository.save(outfit);
         return ResponseEntity.ok(savedOutfit);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Outfit> updateOutfit(@PathVariable Long id, 
-                                               @Valid @RequestBody Outfit outfitDetails,
+                                               @Valid @RequestBody OutfitRequest request,
                                                Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
         Outfit outfit = outfitRepository.findById(id).orElseThrow();
@@ -66,10 +85,20 @@ public class OutfitController {
             return ResponseEntity.status(403).build();
         }
 
-        outfit.setName(outfitDetails.getName());
-        outfit.setOccasion(outfitDetails.getOccasion());
-        outfit.setNotes(outfitDetails.getNotes());
-        outfit.setClothingItems(outfitDetails.getClothingItems());
+        outfit.setName(request.getName());
+        outfit.setOccasion(request.getOccasion());
+        outfit.setNotes(request.getNotes());
+        
+        // Fetch clothing items by IDs
+        List<Clothing> clothingItems = new ArrayList<>();
+        if (request.getClothingItemIds() != null && !request.getClothingItemIds().isEmpty()) {
+            for (Long clothingId : request.getClothingItemIds()) {
+                clothingRepository.findById(clothingId)
+                    .filter(clothing -> clothing.getUser().getId().equals(user.getId()))
+                    .ifPresent(clothingItems::add);
+            }
+        }
+        outfit.setClothingItems(clothingItems);
 
         Outfit updatedOutfit = outfitRepository.save(outfit);
         return ResponseEntity.ok(updatedOutfit);
