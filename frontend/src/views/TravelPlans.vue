@@ -70,6 +70,28 @@
             <textarea v-model="form.notes" class="form-textarea"></textarea>
           </div>
           
+          <div class="form-group">
+            <label class="form-label">选择衣物 (已选 {{ selectedClothingIds.length }} 件)</label>
+            <div v-if="availableClothing.length === 0" class="empty-clothing-msg">
+              您的衣橱里还没有衣物，请先添加衣物
+            </div>
+            <div v-else class="clothing-selector">
+              <div 
+                v-for="item in availableClothing" 
+                :key="item.id" 
+                @click="toggleClothingSelection(item.id)"
+                :class="['clothing-item', { selected: isClothingSelected(item.id) }]"
+              >
+                <div class="clothing-thumb">
+                  <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" />
+                  <div v-else class="no-thumb">👔</div>
+                </div>
+                <div class="clothing-name">{{ item.name }}</div>
+                <div class="clothing-category">{{ item.category }}</div>
+              </div>
+            </div>
+          </div>
+          
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn btn-secondary">取消</button>
             <button type="submit" class="btn btn-primary">保存</button>
@@ -150,6 +172,8 @@ export default {
       showAddModal: false,
       showDetailsModal: false,
       selectedPlan: null,
+      availableClothing: [],
+      selectedClothingIds: [],
       form: {
         name: '',
         destination: '',
@@ -157,12 +181,13 @@ export default {
         endDate: '',
         travelType: '',
         notes: '',
-        clothingItems: []
+        clothingItemIds: []
       }
     }
   },
   mounted() {
     this.loadPlans()
+    this.loadClothing()
   },
   methods: {
     async loadPlans() {
@@ -176,15 +201,38 @@ export default {
         this.loading = false
       }
     },
+
+    async loadClothing() {
+      try {
+        const response = await axios.get('/clothing')
+        this.availableClothing = response.data
+      } catch (error) {
+        console.error('Failed to load clothing:', error)
+      }
+    },
     
     async savePlan() {
       try {
+        this.form.clothingItemIds = this.selectedClothingIds
         await axios.post('/travel-plans', this.form)
         this.closeModal()
         this.loadPlans()
       } catch (error) {
         alert('保存失败：' + (error.response?.data || error.message))
       }
+    },
+
+    toggleClothingSelection(clothingId) {
+      const index = this.selectedClothingIds.indexOf(clothingId)
+      if (index > -1) {
+        this.selectedClothingIds.splice(index, 1)
+      } else {
+        this.selectedClothingIds.push(clothingId)
+      }
+    },
+
+    isClothingSelected(clothingId) {
+      return this.selectedClothingIds.includes(clothingId)
     },
     
     async viewPlanDetails(planId) {
@@ -219,6 +267,7 @@ export default {
     
     closeModal() {
       this.showAddModal = false
+      this.selectedClothingIds = []
       this.form = {
         name: '',
         destination: '',
@@ -226,7 +275,7 @@ export default {
         endDate: '',
         travelType: '',
         notes: '',
-        clothingItems: []
+        clothingItemIds: []
       }
     }
   }
@@ -439,5 +488,84 @@ export default {
   font-size: 0.75rem;
   background-color: rgba(184, 163, 152, 0.2);
   color: var(--text-primary);
+}
+
+.empty-clothing-msg {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  background: var(--background, #FFF5F5);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.clothing-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: var(--background, #FFF5F5);
+  border-radius: 8px;
+}
+
+.clothing-item {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+  transition: all 0.2s;
+  background: white;
+}
+
+.clothing-item:hover {
+  border-color: var(--primary, #E8A0A0);
+  transform: translateY(-2px);
+}
+
+.clothing-item.selected {
+  border-color: var(--primary, #E8A0A0);
+  background: var(--primary-light, #F5C7C7);
+  box-shadow: 0 2px 8px rgba(232, 160, 160, 0.3);
+}
+
+.clothing-thumb {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f8;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.clothing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-thumb {
+  font-size: 2rem;
+  color: var(--text-secondary);
+}
+
+.clothing-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clothing-category {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 </style>

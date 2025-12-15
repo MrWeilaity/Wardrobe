@@ -1,7 +1,10 @@
 package com.wardrobe.controller;
 
+import com.wardrobe.dto.TravelPlanRequest;
+import com.wardrobe.model.Clothing;
 import com.wardrobe.model.TravelPlan;
 import com.wardrobe.model.User;
+import com.wardrobe.repository.ClothingRepository;
 import com.wardrobe.repository.TravelPlanRepository;
 import com.wardrobe.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -21,6 +25,9 @@ public class TravelPlanController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ClothingRepository clothingRepository;
 
     @GetMapping
     public ResponseEntity<List<TravelPlan>> getAllUserTravelPlans(Authentication authentication) {
@@ -43,17 +50,38 @@ public class TravelPlanController {
     }
 
     @PostMapping
-    public ResponseEntity<TravelPlan> createTravelPlan(@Valid @RequestBody TravelPlan travelPlan, 
+    public ResponseEntity<TravelPlan> createTravelPlan(@Valid @RequestBody TravelPlanRequest request, 
                                                        Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+        
+        TravelPlan travelPlan = new TravelPlan();
         travelPlan.setUser(user);
+        travelPlan.setName(request.getName());
+        travelPlan.setDestination(request.getDestination());
+        travelPlan.setStartDate(request.getStartDate());
+        travelPlan.setEndDate(request.getEndDate());
+        travelPlan.setTravelType(request.getTravelType());
+        travelPlan.setNotes(request.getNotes());
+        
+        // Fetch clothing items by IDs
+        List<Clothing> clothingItems = new ArrayList<>();
+        if (request.getClothingItemIds() != null && !request.getClothingItemIds().isEmpty()) {
+            for (Long clothingId : request.getClothingItemIds()) {
+                Clothing clothing = clothingRepository.findById(clothingId).orElse(null);
+                if (clothing != null && clothing.getUser().getId().equals(user.getId())) {
+                    clothingItems.add(clothing);
+                }
+            }
+        }
+        travelPlan.setClothingItems(clothingItems);
+        
         TravelPlan savedTravelPlan = travelPlanRepository.save(travelPlan);
         return ResponseEntity.ok(savedTravelPlan);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TravelPlan> updateTravelPlan(@PathVariable Long id, 
-                                                       @Valid @RequestBody TravelPlan travelPlanDetails,
+                                                       @Valid @RequestBody TravelPlanRequest request,
                                                        Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
         TravelPlan travelPlan = travelPlanRepository.findById(id).orElseThrow();
@@ -62,13 +90,24 @@ public class TravelPlanController {
             return ResponseEntity.status(403).build();
         }
 
-        travelPlan.setName(travelPlanDetails.getName());
-        travelPlan.setDestination(travelPlanDetails.getDestination());
-        travelPlan.setStartDate(travelPlanDetails.getStartDate());
-        travelPlan.setEndDate(travelPlanDetails.getEndDate());
-        travelPlan.setTravelType(travelPlanDetails.getTravelType());
-        travelPlan.setClothingItems(travelPlanDetails.getClothingItems());
-        travelPlan.setNotes(travelPlanDetails.getNotes());
+        travelPlan.setName(request.getName());
+        travelPlan.setDestination(request.getDestination());
+        travelPlan.setStartDate(request.getStartDate());
+        travelPlan.setEndDate(request.getEndDate());
+        travelPlan.setTravelType(request.getTravelType());
+        travelPlan.setNotes(request.getNotes());
+        
+        // Fetch clothing items by IDs
+        List<Clothing> clothingItems = new ArrayList<>();
+        if (request.getClothingItemIds() != null && !request.getClothingItemIds().isEmpty()) {
+            for (Long clothingId : request.getClothingItemIds()) {
+                Clothing clothing = clothingRepository.findById(clothingId).orElse(null);
+                if (clothing != null && clothing.getUser().getId().equals(user.getId())) {
+                    clothingItems.add(clothing);
+                }
+            }
+        }
+        travelPlan.setClothingItems(clothingItems);
 
         TravelPlan updatedTravelPlan = travelPlanRepository.save(travelPlan);
         return ResponseEntity.ok(updatedTravelPlan);
