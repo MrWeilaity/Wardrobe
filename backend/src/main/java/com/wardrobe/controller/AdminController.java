@@ -1,9 +1,10 @@
 package com.wardrobe.controller;
 
-import com.wardrobe.dto.SystemStatsResponse;
-import com.wardrobe.dto.UserResponse;
+import com.wardrobe.dto.*;
 import com.wardrobe.model.ActivityLog;
 import com.wardrobe.model.Clothing;
+import com.wardrobe.model.Outfit;
+import com.wardrobe.model.TravelPlan;
 import com.wardrobe.model.User;
 import com.wardrobe.repository.ActivityLogRepository;
 import com.wardrobe.repository.ClothingRepository;
@@ -193,58 +194,74 @@ public class AdminController {
 
     @GetMapping("/clothing")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Clothing>> getAllClothing() {
+    public ResponseEntity<List<ClothingResponse>> getAllClothing() {
         List<Clothing> clothing = clothingRepository.findAll();
-        return ResponseEntity.ok(clothing);
+        List<ClothingResponse> responses = clothing.stream()
+            .map(this::convertToClothingResponse)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/users/{userId}/clothing")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Clothing>> getUserClothing(@PathVariable Long userId) {
+    public ResponseEntity<List<ClothingResponse>> getUserClothing(@PathVariable Long userId) {
         List<Clothing> clothing = clothingRepository.findByUserId(userId);
-        return ResponseEntity.ok(clothing);
+        List<ClothingResponse> responses = clothing.stream()
+            .map(this::convertToClothingResponse)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/outfits")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getAllOutfits() {
+    public ResponseEntity<List<OutfitResponse>> getAllOutfits() {
         try {
-            List<com.wardrobe.model.Outfit> outfits = outfitRepository.findAll();
-            return ResponseEntity.ok(outfits);
+            List<Outfit> outfits = outfitRepository.findAll();
+            List<OutfitResponse> responses = outfits.stream()
+                .map(this::convertToOutfitResponse)
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(responses);
         } catch (Exception e) {
+            System.err.println("Error loading outfits: " + e.getMessage());
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
 
     @GetMapping("/outfits/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getOutfitById(@PathVariable Long id) {
-        Optional<com.wardrobe.model.Outfit> outfit = outfitRepository.findById(id);
+    public ResponseEntity<OutfitResponse> getOutfitById(@PathVariable Long id) {
+        Optional<Outfit> outfit = outfitRepository.findById(id);
         if (!outfit.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(outfit.get());
+        OutfitResponse response = convertToOutfitResponse(outfit.get());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/travel-plans")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getAllTravelPlans() {
+    public ResponseEntity<List<TravelPlanResponse>> getAllTravelPlans() {
         try {
-            List<com.wardrobe.model.TravelPlan> plans = travelPlanRepository.findAll();
-            return ResponseEntity.ok(plans);
+            List<TravelPlan> plans = travelPlanRepository.findAll();
+            List<TravelPlanResponse> responses = plans.stream()
+                .map(this::convertToTravelPlanResponse)
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(responses);
         } catch (Exception e) {
+            System.err.println("Error loading travel plans: " + e.getMessage());
             return ResponseEntity.ok(new ArrayList<>());
         }
     }
 
     @GetMapping("/travel-plans/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getTravelPlanById(@PathVariable Long id) {
-        Optional<com.wardrobe.model.TravelPlan> plan = travelPlanRepository.findById(id);
+    public ResponseEntity<TravelPlanResponse> getTravelPlanById(@PathVariable Long id) {
+        Optional<TravelPlan> plan = travelPlanRepository.findById(id);
         if (!plan.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(plan.get());
+        TravelPlanResponse response = convertToTravelPlanResponse(plan.get());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/activity-logs")
@@ -286,5 +303,87 @@ public class AdminController {
         }
         
         return ResponseEntity.ok(growthStats);
+    }
+
+    // Converter methods
+    private ClothingResponse convertToClothingResponse(Clothing clothing) {
+        ClothingResponse response = new ClothingResponse();
+        response.setId(clothing.getId());
+        response.setUserId(clothing.getUser() != null ? clothing.getUser().getId() : null);
+        response.setName(clothing.getName());
+        response.setCategory(clothing.getCategory());
+        response.setColor(clothing.getColor());
+        response.setSize(clothing.getSize());
+        response.setBrand(clothing.getBrand());
+        response.setPrice(clothing.getPrice());
+        response.setMaterial(clothing.getMaterial());
+        response.setSeason(clothing.getSeason());
+        response.setImageUrl(clothing.getImageUrl());
+        response.setPurchaseDate(clothing.getPurchaseDate());
+        response.setWearCount(clothing.getWearCount());
+        response.setStatus(clothing.getStatus());
+        response.setTags(clothing.getTags());
+        response.setCreatedAt(clothing.getCreatedAt());
+        response.setUpdatedAt(clothing.getUpdatedAt());
+        return response;
+    }
+
+    private ClothingSimpleResponse convertToClothingSimpleResponse(Clothing clothing) {
+        ClothingSimpleResponse response = new ClothingSimpleResponse();
+        response.setId(clothing.getId());
+        response.setName(clothing.getName());
+        response.setCategory(clothing.getCategory());
+        response.setColor(clothing.getColor());
+        response.setImageUrl(clothing.getImageUrl());
+        return response;
+    }
+
+    private OutfitResponse convertToOutfitResponse(Outfit outfit) {
+        OutfitResponse response = new OutfitResponse();
+        response.setId(outfit.getId());
+        response.setUserId(outfit.getUser() != null ? outfit.getUser().getId() : null);
+        response.setName(outfit.getName());
+        response.setOccasion(outfit.getOccasion());
+        response.setNotes(outfit.getNotes());
+        
+        // Convert clothing items
+        if (outfit.getClothingItems() != null) {
+            List<ClothingSimpleResponse> items = outfit.getClothingItems().stream()
+                .map(this::convertToClothingSimpleResponse)
+                .collect(Collectors.toList());
+            response.setClothingItems(items);
+        } else {
+            response.setClothingItems(new ArrayList<>());
+        }
+        
+        response.setCreatedAt(outfit.getCreatedAt());
+        response.setUpdatedAt(outfit.getUpdatedAt());
+        return response;
+    }
+
+    private TravelPlanResponse convertToTravelPlanResponse(TravelPlan plan) {
+        TravelPlanResponse response = new TravelPlanResponse();
+        response.setId(plan.getId());
+        response.setUserId(plan.getUser() != null ? plan.getUser().getId() : null);
+        response.setName(plan.getName());
+        response.setDestination(plan.getDestination());
+        response.setStartDate(plan.getStartDate());
+        response.setEndDate(plan.getEndDate());
+        response.setTravelType(plan.getTravelType());
+        response.setNotes(plan.getNotes());
+        
+        // Convert clothing items
+        if (plan.getClothingItems() != null) {
+            List<ClothingSimpleResponse> items = plan.getClothingItems().stream()
+                .map(this::convertToClothingSimpleResponse)
+                .collect(Collectors.toList());
+            response.setClothingItems(items);
+        } else {
+            response.setClothingItems(new ArrayList<>());
+        }
+        
+        response.setCreatedAt(plan.getCreatedAt());
+        response.setUpdatedAt(plan.getUpdatedAt());
+        return response;
     }
 }
