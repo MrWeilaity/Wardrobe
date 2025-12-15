@@ -35,6 +35,9 @@ public class AdminController {
     @Autowired
     private TravelPlanRepository travelPlanRepository;
 
+    @Autowired
+    private com.wardrobe.repository.ActivityLogRepository activityLogRepository;
+
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
@@ -197,5 +200,51 @@ public class AdminController {
     public ResponseEntity<List<Clothing>> getUserClothing(@PathVariable Long userId) {
         List<Clothing> clothing = clothingRepository.findByUserId(userId);
         return ResponseEntity.ok(clothing);
+    }
+
+    @GetMapping("/activity-logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getActivityLogs(@RequestParam(required = false, defaultValue = "50") int limit) {
+        try {
+            List<com.wardrobe.model.ActivityLog> logs = activityLogRepository.findTop50ByOrderByCreatedAtDesc();
+            return ResponseEntity.ok(logs);
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+
+    @GetMapping("/stats/growth")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getGrowthStats() {
+        Map<String, Object> growthStats = new HashMap<>();
+        
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime last7Days = now.minusDays(7);
+        java.time.LocalDateTime last30Days = now.minusDays(30);
+        
+        // Count new users in last 7 and 30 days
+        long newUsersLast7Days = userRepository.findAll().stream()
+            .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last7Days))
+            .count();
+            
+        long newUsersLast30Days = userRepository.findAll().stream()
+            .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last30Days))
+            .count();
+        
+        growthStats.put("newUsersLast7Days", newUsersLast7Days);
+        growthStats.put("newUsersLast30Days", newUsersLast30Days);
+        
+        // Activity counts
+        try {
+            long activitiesLast7Days = activityLogRepository.countByCreatedAtAfter(last7Days);
+            long activitiesLast30Days = activityLogRepository.countByCreatedAtAfter(last30Days);
+            growthStats.put("activitiesLast7Days", activitiesLast7Days);
+            growthStats.put("activitiesLast30Days", activitiesLast30Days);
+        } catch (Exception e) {
+            growthStats.put("activitiesLast7Days", 0);
+            growthStats.put("activitiesLast30Days", 0);
+        }
+        
+        return ResponseEntity.ok(growthStats);
     }
 }
