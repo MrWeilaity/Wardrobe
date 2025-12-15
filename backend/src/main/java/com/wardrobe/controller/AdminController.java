@@ -205,6 +205,48 @@ public class AdminController {
         return ResponseEntity.ok(clothing);
     }
 
+    @GetMapping("/outfits")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllOutfits() {
+        try {
+            List<com.wardrobe.model.Outfit> outfits = outfitRepository.findAll();
+            return ResponseEntity.ok(outfits);
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+
+    @GetMapping("/outfits/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getOutfitById(@PathVariable Long id) {
+        Optional<com.wardrobe.model.Outfit> outfit = outfitRepository.findById(id);
+        if (!outfit.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(outfit.get());
+    }
+
+    @GetMapping("/travel-plans")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllTravelPlans() {
+        try {
+            List<com.wardrobe.model.TravelPlan> plans = travelPlanRepository.findAll();
+            return ResponseEntity.ok(plans);
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+
+    @GetMapping("/travel-plans/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getTravelPlanById(@PathVariable Long id) {
+        Optional<com.wardrobe.model.TravelPlan> plan = travelPlanRepository.findById(id);
+        if (!plan.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(plan.get());
+    }
+
     @GetMapping("/activity-logs")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ActivityLog>> getActivityLogs() {

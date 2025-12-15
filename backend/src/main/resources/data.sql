@@ -1,16 +1,20 @@
 -- 示例数据脚本
 -- 插入测试用户（密码均为：password123）
+-- 管理员账号：admin / admin123
 -- 注意：users表的列为 id, username, email, password, avatar_url, created_at, updated_at
 INSERT INTO users (username, email, password) VALUES
+('admin', 'admin@wardrobe.com', '$2a$10$N.zmdr3.WGSS.RKheBc1meLuVbvS0hzPvL3VVJnN2TwXGvQhgF9F2'),
 ('zhangsan', 'zhangsan@example.com', '$2a$10$xQXY8TKP8qkVSVqKxRXI4eKvVYvKlXZJxYt5QZmVYvKlXZJxYt5QZ'),
 ('lisi', 'lisi@example.com', '$2a$10$xQXY8TKP8qkVSVqKxRXI4eKvVYvKlXZJxYt5QZmVYvKlXZJxYt5QZ'),
 ('wangwu', 'wangwu@example.com', '$2a$10$xQXY8TKP8qkVSVqKxRXI4eKvVYvKlXZJxYt5QZmVYvKlXZJxYt5QZ');
 
 -- 插入用户角色（user_roles表的列为 user_id, role）
 INSERT INTO user_roles (user_id, role) VALUES
-(1, 'USER'),
-(2, 'USER'),
-(3, 'USER');
+(1, 'ROLE_USER'),
+(1, 'ROLE_ADMIN'),
+(2, 'ROLE_USER'),
+(3, 'ROLE_USER'),
+(4, 'ROLE_USER');
 
 -- 插入衣物数据（55条）
 -- 注意：clothing表的列为 id, user_id, name, category, color, size, brand, price, material, season, image_url, purchase_date, wear_count, status, created_at, updated_at

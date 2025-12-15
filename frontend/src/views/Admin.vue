@@ -260,6 +260,98 @@
       </p>
     </div>
 
+    <!-- All Outfits Management -->
+    <div class="outfits-section card">
+      <div class="section-header">
+        <h3>全部穿搭方案管理</h3>
+        <div class="header-actions">
+          <button @click="loadAllOutfits" class="btn btn-secondary">
+            🔄 刷新穿搭列表
+          </button>
+        </div>
+      </div>
+      <div v-if="loadingOutfits" class="loading">加载中...</div>
+      <div v-else-if="allOutfits.length === 0" class="empty-state">暂无穿搭方案数据</div>
+      <div v-else class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>场合</th>
+              <th>衣物数量</th>
+              <th>所属用户</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="outfit in allOutfits.slice(0, 20)" :key="outfit.id">
+              <td>{{ outfit.id }}</td>
+              <td>{{ outfit.name }}</td>
+              <td>{{ outfit.occasion || '-' }}</td>
+              <td>{{ outfit.clothingItems?.length || 0 }}</td>
+              <td>{{ outfit.userId }}</td>
+              <td>{{ formatDate(outfit.createdAt) }}</td>
+              <td>
+                <button @click="viewOutfitDetails(outfit)" class="btn-icon" title="查看详情">👁️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p v-if="allOutfits.length > 20" class="show-more">
+        显示前20条，共 {{ allOutfits.length }} 条记录
+      </p>
+    </div>
+
+    <!-- All Travel Plans Management -->
+    <div class="travel-section card">
+      <div class="section-header">
+        <h3>全部旅行计划管理</h3>
+        <div class="header-actions">
+          <button @click="loadAllTravelPlans" class="btn btn-secondary">
+            🔄 刷新旅行列表
+          </button>
+        </div>
+      </div>
+      <div v-if="loadingTravelPlans" class="loading">加载中...</div>
+      <div v-else-if="allTravelPlans.length === 0" class="empty-state">暂无旅行计划数据</div>
+      <div v-else class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>目的地</th>
+              <th>日期</th>
+              <th>类型</th>
+              <th>衣物数量</th>
+              <th>所属用户</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="plan in allTravelPlans.slice(0, 20)" :key="plan.id">
+              <td>{{ plan.id }}</td>
+              <td>{{ plan.name }}</td>
+              <td>{{ plan.destination }}</td>
+              <td>{{ formatDate(plan.startDate) }} - {{ formatDate(plan.endDate) }}</td>
+              <td>{{ plan.travelType || '-' }}</td>
+              <td>{{ plan.clothingItems?.length || 0 }}</td>
+              <td>{{ plan.userId }}</td>
+              <td>
+                <button @click="viewTravelPlanDetails(plan)" class="btn-icon" title="查看详情">👁️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p v-if="allTravelPlans.length > 20" class="show-more">
+        显示前20条，共 {{ allTravelPlans.length }} 条记录
+      </p>
+    </div>
+
     <!-- User Details Modal -->
     <div v-if="showDetailsModal" class="modal" @click.self="closeDetailsModal">
       <div class="modal-content">
@@ -320,12 +412,115 @@
         </div>
       </div>
     </div>
+
+    <!-- Outfit Details Modal -->
+    <div v-if="showOutfitDetailsModal" class="modal" @click.self="closeOutfitDetailsModal">
+      <div class="modal-content large">
+        <button @click="closeOutfitDetailsModal" class="modal-close">✕</button>
+        <h3>穿搭方案详情</h3>
+        <div v-if="selectedOutfit" class="details-section">
+          <div class="detail-row">
+            <span class="detail-label">名称：</span>
+            <span class="detail-value">{{ selectedOutfit.name }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedOutfit.occasion">
+            <span class="detail-label">场合：</span>
+            <span class="detail-value">{{ selectedOutfit.occasion }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedOutfit.notes">
+            <span class="detail-label">备注：</span>
+            <span class="detail-value">{{ selectedOutfit.notes }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">创建时间：</span>
+            <span class="detail-value">{{ formatDateTime(selectedOutfit.createdAt) }}</span>
+          </div>
+          <h4 class="section-title">关联的衣物 ({{ selectedOutfit.clothingItems?.length || 0 }}件)</h4>
+          <div v-if="!selectedOutfit.clothingItems || selectedOutfit.clothingItems.length === 0" class="empty-state">
+            该穿搭方案暂无关联衣物
+          </div>
+          <div v-else class="clothing-grid">
+            <div v-for="item in selectedOutfit.clothingItems" :key="item.id" class="clothing-item">
+              <div class="clothing-image">
+                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" />
+                <div v-else class="no-image">👔</div>
+              </div>
+              <div class="clothing-details">
+                <h4>{{ item.name }}</h4>
+                <p class="clothing-meta">
+                  <span class="category-tag">{{ item.category }}</span>
+                  <span class="color-tag">{{ item.color }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel Plan Details Modal -->
+    <div v-if="showTravelPlanDetailsModal" class="modal" @click.self="closeTravelPlanDetailsModal">
+      <div class="modal-content large">
+        <button @click="closeTravelPlanDetailsModal" class="modal-close">✕</button>
+        <h3>旅行计划详情</h3>
+        <div v-if="selectedTravelPlan" class="details-section">
+          <div class="detail-row">
+            <span class="detail-label">名称：</span>
+            <span class="detail-value">{{ selectedTravelPlan.name }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">目的地：</span>
+            <span class="detail-value">{{ selectedTravelPlan.destination }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">出发日期：</span>
+            <span class="detail-value">{{ formatDate(selectedTravelPlan.startDate) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">返程日期：</span>
+            <span class="detail-value">{{ formatDate(selectedTravelPlan.endDate) }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedTravelPlan.travelType">
+            <span class="detail-label">旅行类型：</span>
+            <span class="detail-value">{{ selectedTravelPlan.travelType }}</span>
+          </div>
+          <div class="detail-row" v-if="selectedTravelPlan.notes">
+            <span class="detail-label">备注：</span>
+            <span class="detail-value">{{ selectedTravelPlan.notes }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">创建时间：</span>
+            <span class="detail-value">{{ formatDateTime(selectedTravelPlan.createdAt) }}</span>
+          </div>
+          <h4 class="section-title">打包的衣物 ({{ selectedTravelPlan.clothingItems?.length || 0 }}件)</h4>
+          <div v-if="!selectedTravelPlan.clothingItems || selectedTravelPlan.clothingItems.length === 0" class="empty-state">
+            该旅行计划暂无打包衣物
+          </div>
+          <div v-else class="clothing-grid">
+            <div v-for="item in selectedTravelPlan.clothingItems" :key="item.id" class="clothing-item">
+              <div class="clothing-image">
+                <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" />
+                <div v-else class="no-image">👔</div>
+              </div>
+              <div class="clothing-details">
+                <h4>{{ item.name }}</h4>
+                <p class="clothing-meta">
+                  <span class="category-tag">{{ item.category }}</span>
+                  <span class="color-tag">{{ item.color }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from '../api/axios'
 import { Chart, registerables } from 'chart.js'
+import { formatDate, formatDateTime } from '../utils/dateFormatter'
 
 Chart.register(...registerables)
 
@@ -347,11 +542,19 @@ export default {
       loadingUsers: false,
       allClothing: [],
       loadingClothing: false,
+      allOutfits: [],
+      loadingOutfits: false,
+      allTravelPlans: [],
+      loadingTravelPlans: false,
       showDetailsModal: false,
       showUserClothingModal: false,
+      showOutfitDetailsModal: false,
+      showTravelPlanDetailsModal: false,
       showUserModal: false,
       selectedUserDetails: null,
       userClothing: [],
+      selectedOutfit: null,
+      selectedTravelPlan: null,
       charts: {
         category: null,
         color: null,
@@ -378,6 +581,8 @@ export default {
     this.loadStats()
     this.loadUsers()
     this.loadAllClothing()
+    this.loadAllOutfits()
+    this.loadAllTravelPlans()
     this.loadActivityLogs()
     this.loadGrowthStats()
   },
@@ -533,6 +738,32 @@ export default {
       }
     },
 
+    async loadAllOutfits() {
+      this.loadingOutfits = true
+      try {
+        const response = await axios.get('/admin/outfits')
+        this.allOutfits = response.data
+      } catch (error) {
+        console.error('Failed to load outfits:', error)
+        alert('加载穿搭数据失败')
+      } finally {
+        this.loadingOutfits = false
+      }
+    },
+
+    async loadAllTravelPlans() {
+      this.loadingTravelPlans = true
+      try {
+        const response = await axios.get('/admin/travel-plans')
+        this.allTravelPlans = response.data
+      } catch (error) {
+        console.error('Failed to load travel plans:', error)
+        alert('加载旅行计划数据失败')
+      } finally {
+        this.loadingTravelPlans = false
+      }
+    },
+
     async viewUserDetails(userId) {
       try {
         const response = await axios.get(`/admin/users/${userId}/details`)
@@ -594,24 +825,41 @@ export default {
       this.showUserClothingModal = false
       this.userClothing = []
     },
-    
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleDateString('zh-CN')
+
+    async viewOutfitDetails(outfit) {
+      try {
+        const response = await axios.get(`/admin/outfits/${outfit.id}`)
+        this.selectedOutfit = response.data
+        this.showOutfitDetailsModal = true
+      } catch (error) {
+        console.error('Failed to load outfit details:', error)
+        alert('加载穿搭详情失败')
+      }
     },
 
-    formatDateTime(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+    closeOutfitDetailsModal() {
+      this.showOutfitDetailsModal = false
+      this.selectedOutfit = null
     },
+
+    async viewTravelPlanDetails(plan) {
+      try {
+        const response = await axios.get(`/admin/travel-plans/${plan.id}`)
+        this.selectedTravelPlan = response.data
+        this.showTravelPlanDetailsModal = true
+      } catch (error) {
+        console.error('Failed to load travel plan details:', error)
+        alert('加载旅行计划详情失败')
+      }
+    },
+
+    closeTravelPlanDetailsModal() {
+      this.showTravelPlanDetailsModal = false
+      this.selectedTravelPlan = null
+    },
+    
+    formatDate,
+    formatDateTime,
 
     async loadActivityLogs() {
       this.loadingLogs = true
@@ -698,6 +946,8 @@ export default {
           this.loadStats(),
           this.loadUsers(),
           this.loadAllClothing(),
+          this.loadAllOutfits(),
+          this.loadAllTravelPlans(),
           this.loadActivityLogs(),
           this.loadGrowthStats()
         ])
@@ -1470,5 +1720,69 @@ tbody tr:hover {
   .growth-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.outfits-section,
+.travel-section {
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.outfits-section h3,
+.travel-section h3 {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.data-table-container {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.data-table thead {
+  background-color: var(--background);
+}
+
+.data-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--background);
+}
+
+.details-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.details-section h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.section-title {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  font-size: 1.1rem;
 }
 </style>
