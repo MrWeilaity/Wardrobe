@@ -23,8 +23,5 @@ server:
     context-path: /api
 
 jwt:
-  secret: SmartWardrobeSecretKeyForJWTTokenGeneration2024
+  secret: SmartWardrobeSecretKeyForJWTTokenGeneration2024SmartWardrobeSecretKeyForJWTTokenGeneration2024SecureKey
   expiration: 86400000  # 24 hours in milliseconds
-
-cors:
-  allowed-origins: http://localhost:5173,http://localhost:3000
