@@ -460,27 +460,7 @@ export default {
       this.filteredUsers = sorted
     },
 
-    exportUsersToCSV() {
-      if (this.filteredUsers.length === 0) {
-        alert('没有数据可以导出')
-        return
-      }
-
-      // CSV header
-      const header = ['ID', '用户名', '邮箱', '角色', '注册时间', '衣物数', '穿搭数', '旅行计划数']
-      
-      // CSV rows
-      const rows = this.filteredUsers.map(user => [
-        user.id,
-        user.username,
-        user.email,
-        this.isUserAdmin(user) ? '管理员' : '用户',
-        this.formatDate(user.createdAt),
-        user.clothingCount,
-        user.outfitCount,
-        user.travelPlanCount
-      ])
-      
+    downloadCSV(header, rows, filename) {
       // Build CSV content
       const csvContent = [
         header.join(','),
@@ -493,13 +473,34 @@ export default {
       const url = URL.createObjectURL(blob)
       
       link.setAttribute('href', url)
-      link.setAttribute('download', `用户数据_${new Date().toISOString().split('T')[0]}.csv`)
+      link.setAttribute('download', filename)
       link.style.visibility = 'hidden'
       
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    },
+
+    exportUsersToCSV() {
+      if (this.filteredUsers.length === 0) {
+        alert('没有数据可以导出')
+        return
+      }
+
+      const header = ['ID', '用户名', '邮箱', '角色', '注册时间', '衣物数', '穿搭数', '旅行计划数']
+      const rows = this.filteredUsers.map(user => [
+        user.id,
+        user.username,
+        user.email,
+        this.isUserAdmin(user) ? '管理员' : '用户',
+        this.formatDate(user.createdAt),
+        user.clothingCount,
+        user.outfitCount,
+        user.travelPlanCount
+      ])
       
+      const filename = `用户数据_${new Date().toISOString().split('T')[0]}.csv`
+      this.downloadCSV(header, rows, filename)
       alert('用户数据已导出')
     },
     
@@ -640,10 +641,7 @@ export default {
         return
       }
 
-      // CSV header
       const header = ['ID', '名称', '类别', '颜色', '季节', '品牌', '价格', '尺寸', '所属用户ID']
-      
-      // CSV rows
       const rows = this.allClothing.map(item => [
         item.id,
         item.name,
@@ -656,32 +654,15 @@ export default {
         item.userId
       ])
       
-      // Build CSV content
-      const csvContent = [
-        header.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n')
-      
-      // Create download link
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      
-      link.setAttribute('href', url)
-      link.setAttribute('download', `衣物数据_${new Date().toISOString().split('T')[0]}.csv`)
-      link.style.visibility = 'hidden'
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
+      const filename = `衣物数据_${new Date().toISOString().split('T')[0]}.csv`
+      this.downloadCSV(header, rows, filename)
       alert('衣物数据已导出')
     },
 
     calculateActiveUserRate() {
-      if (this.stats.totalUsers === 0) return 0
+      if (this.users.length === 0) return 0
       const activeUsers = this.users.filter(u => u.clothingCount > 0).length
-      return Math.round((activeUsers / this.stats.totalUsers) * 100)
+      return Math.round((activeUsers / this.users.length) * 100)
     },
 
     calculateAvgClothingPerUser() {

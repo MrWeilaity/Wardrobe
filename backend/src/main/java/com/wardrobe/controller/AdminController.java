@@ -204,7 +204,7 @@ public class AdminController {
 
     @GetMapping("/activity-logs")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getActivityLogs(@RequestParam(required = false, defaultValue = "50") int limit) {
+    public ResponseEntity<?> getActivityLogs() {
         try {
             List<com.wardrobe.model.ActivityLog> logs = activityLogRepository.findTop50ByOrderByCreatedAtDesc();
             return ResponseEntity.ok(logs);
@@ -222,14 +222,9 @@ public class AdminController {
         java.time.LocalDateTime last7Days = now.minusDays(7);
         java.time.LocalDateTime last30Days = now.minusDays(30);
         
-        // Count new users in last 7 and 30 days
-        long newUsersLast7Days = userRepository.findAll().stream()
-            .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last7Days))
-            .count();
-            
-        long newUsersLast30Days = userRepository.findAll().stream()
-            .filter(u -> u.getCreatedAt() != null && u.getCreatedAt().isAfter(last30Days))
-            .count();
+        // Count new users in last 7 and 30 days using optimized queries
+        long newUsersLast7Days = userRepository.countByCreatedAtAfter(last7Days);
+        long newUsersLast30Days = userRepository.countByCreatedAtAfter(last30Days);
         
         growthStats.put("newUsersLast7Days", newUsersLast7Days);
         growthStats.put("newUsersLast30Days", newUsersLast30Days);
