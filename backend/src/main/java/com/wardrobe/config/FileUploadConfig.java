@@ -28,14 +28,19 @@ public class FileUploadConfig implements WebMvcConfigurer {
         // Serve uploaded files statically
         // Since context-path is /api, this will be accessible at /api/uploads/**
         // Convert to absolute path to ensure proper file serving
+        String absolutePath = getAbsoluteUploadPath();
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + absolutePath);
+    }
+
+    private String getAbsoluteUploadPath() {
         File uploadDir = new File(uploadPath);
         String absolutePath = uploadDir.getAbsolutePath();
         // Ensure path ends with separator for proper resource location
         if (!absolutePath.endsWith(File.separator)) {
             absolutePath += File.separator;
         }
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + absolutePath);
+        return absolutePath;
     }
 
     public String getUploadPath() {
