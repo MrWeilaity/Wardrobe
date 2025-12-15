@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: smart-wardrobe
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/wardrobe?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL5Dialect
+  
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+      encoding: UTF-8
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+jwt:
+  secret: SmartWardrobeSecretKeyForJWTTokenGeneration2024SmartWardrobeSecretKeyForJWTTokenGeneration2024SecureKey
+  expiration: 86400000  # 24 hours in milliseconds
