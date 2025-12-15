@@ -76,12 +76,15 @@ router.beforeEach((to, from, next) => {
           next('/')
         }
       } catch (e) {
-        // Error parsing user data, redirect to home
-        next('/')
+        // Error parsing user data, clear corrupted data and redirect to login
+        localStorage.removeItem('user')
+        localStorage.removeItem('token')
+        next('/login')
       }
     } else {
-      // No user data, redirect to home
-      next('/')
+      // No user data but has token, clear token and redirect to login
+      localStorage.removeItem('token')
+      next('/login')
     }
     return
   }
