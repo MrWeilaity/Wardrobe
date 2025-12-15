@@ -198,6 +198,8 @@ export default {
 }
 </script>
 
+<style src="../assets/clothing-cards.css"></style>
+
 <style scoped>
 .page-header {
   display: flex;

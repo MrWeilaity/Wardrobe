@@ -520,6 +520,7 @@
 <script>
 import axios from '../api/axios'
 import { Chart, registerables } from 'chart.js'
+import { formatDate, formatDateTime } from '../utils/dateFormatter'
 
 Chart.register(...registerables)
 
@@ -857,23 +858,8 @@ export default {
       this.selectedTravelPlan = null
     },
     
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleDateString('zh-CN')
-    },
-
-    formatDateTime(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
+    formatDate,
+    formatDateTime,
 
     async loadActivityLogs() {
       this.loadingLogs = true
