@@ -10,7 +10,7 @@
 
 ### 后端
 - **框架**: Spring Boot 2.7.18
-- **数据库**: H2 (开发) / MySQL (生产)
+- **数据库**: MySQL 5.7
 - **安全**: Spring Security + JWT
 - **ORM**: Spring Data JPA
 - **语言**: Java 11
@@ -58,6 +58,23 @@
 - Java 11+
 - Node.js 16+
 - Maven 3.6+
+- **MySQL 5.7**
+
+### 数据库准备
+
+1. 安装 MySQL 5.7
+2. 创建数据库：
+```bash
+mysql -u root -p
+CREATE DATABASE wardrobe CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+或运行提供的脚本：
+```bash
+mysql -u root -p < backend/src/main/resources/schema.sql
+```
+
+详细配置说明：`backend/数据库配置说明.md`
 
 ### 启动后端
 
@@ -67,8 +84,6 @@ mvn spring-boot:run
 ```
 
 后端服务将在 `http://localhost:8080` 启动
-
-访问 H2 控制台: `http://localhost:8080/api/h2-console`
 
 ### 启动前端
 

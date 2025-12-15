@@ -8,8 +8,7 @@ Spring Boot backend service for the Smart Wardrobe Management System.
 - Spring Boot 2.7.18
 - Spring Security + JWT
 - Spring Data JPA
-- H2 Database (development)
-- MySQL (production)
+- **MySQL 5.7 Database**
 - Maven
 
 ## Getting Started
@@ -18,6 +17,30 @@ Spring Boot backend service for the Smart Wardrobe Management System.
 
 - Java 11 or higher
 - Maven 3.6+
+- **MySQL 5.7**
+
+### Database Setup
+
+1. Install MySQL 5.7
+2. Create database:
+```sql
+CREATE DATABASE wardrobe CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Or run the provided schema:
+```bash
+mysql -u root -p < src/main/resources/schema.sql
+```
+
+3. Update database credentials in `src/main/resources/application.yml` if needed:
+```yaml
+spring:
+  datasource:
+    username: root
+    password: root  # Change this to your MySQL password
+```
+
+详细配置说明请查看：`数据库配置说明.md`
 
 ### Running the Application
 
@@ -56,13 +79,20 @@ The server will start on `http://localhost:8080`
 - `PUT /api/travel-plans/{id}` - Update travel plan
 - `DELETE /api/travel-plans/{id}` - Delete travel plan
 
-### H2 Console
+### MySQL Connection
 
-Access H2 console at: `http://localhost:8080/api/h2-console`
+The application connects to MySQL with the following default settings:
 
-- JDBC URL: `jdbc:h2:mem:wardrobedb`
-- Username: `sa`
-- Password: (leave empty)
+- Host: `localhost:3306`
+- Database: `wardrobe`
+- Username: `root`
+- Password: `root`
+- Driver: MySQL 5.7 JDBC Driver
+
+You can connect to MySQL using:
+```bash
+mysql -u root -p wardrobe
+```
 
 ## Project Structure
 
