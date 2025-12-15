@@ -435,7 +435,7 @@
             <span class="detail-label">创建时间：</span>
             <span class="detail-value">{{ formatDateTime(selectedOutfit.createdAt) }}</span>
           </div>
-          <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">关联的衣物 ({{ selectedOutfit.clothingItems?.length || 0 }}件)</h4>
+          <h4 class="section-title">关联的衣物 ({{ selectedOutfit.clothingItems?.length || 0 }}件)</h4>
           <div v-if="!selectedOutfit.clothingItems || selectedOutfit.clothingItems.length === 0" class="empty-state">
             该穿搭方案暂无关联衣物
           </div>
@@ -492,7 +492,7 @@
             <span class="detail-label">创建时间：</span>
             <span class="detail-value">{{ formatDateTime(selectedTravelPlan.createdAt) }}</span>
           </div>
-          <h4 style="margin-top: 1.5rem; margin-bottom: 1rem;">打包的衣物 ({{ selectedTravelPlan.clothingItems?.length || 0 }}件)</h4>
+          <h4 class="section-title">打包的衣物 ({{ selectedTravelPlan.clothingItems?.length || 0 }}件)</h4>
           <div v-if="!selectedTravelPlan.clothingItems || selectedTravelPlan.clothingItems.length === 0" class="empty-state">
             该旅行计划暂无打包衣物
           </div>
@@ -1789,6 +1789,13 @@ tbody tr:hover {
 }
 
 .details-section h4 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.section-title {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
   color: var(--text-primary);
   font-size: 1.1rem;
 }

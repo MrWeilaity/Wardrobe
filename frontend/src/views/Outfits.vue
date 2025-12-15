@@ -111,6 +111,7 @@
 
 <script>
 import axios from '../api/axios'
+import { formatDateTime } from '../utils/dateFormatter'
 
 export default {
   name: 'Outfits',
@@ -171,17 +172,7 @@ export default {
       this.selectedOutfit = null
     },
 
-    formatDateTime(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
+    formatDateTime,
     
     async deleteOutfit(id) {
       if (confirm('确定要删除这个穿搭方案吗？')) {

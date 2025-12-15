@@ -139,6 +139,7 @@
 
 <script>
 import axios from '../api/axios'
+import { formatDate, formatDateTime } from '../utils/dateFormatter'
 
 export default {
   name: 'TravelPlans',
@@ -202,17 +203,8 @@ export default {
       this.selectedPlan = null
     },
 
-    formatDateTime(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
+    formatDateTime,
+    formatDate,
     
     async deletePlan(id) {
       if (confirm('确定要删除这个旅行计划吗？')) {
@@ -223,12 +215,6 @@ export default {
           alert('删除失败')
         }
       }
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleDateString('zh-CN')
     },
     
     closeModal() {
