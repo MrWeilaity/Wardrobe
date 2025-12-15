@@ -11,6 +11,7 @@ import com.wardrobe.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -95,26 +96,33 @@ public class AdminController {
     }
 
     @DeleteMapping("/users/{userId}")
+    @Transactional
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         if (!userRepository.existsById(userId)) {
             return ResponseEntity.notFound().build();
         }
 
-        // Delete user's clothing first (cascade)
-        clothingRepository.deleteByUserId(userId);
-        
-        // Delete user's outfits
-        outfitRepository.deleteByUserId(userId);
-        
-        // Delete user's travel plans
-        travelPlanRepository.deleteByUserId(userId);
-        
-        // Delete user
-        userRepository.deleteById(userId);
+        try {
+            // Delete user's clothing first (cascade)
+            clothingRepository.deleteByUserId(userId);
+            
+            // Delete user's outfits
+            outfitRepository.deleteByUserId(userId);
+            
+            // Delete user's travel plans
+            travelPlanRepository.deleteByUserId(userId);
+            
+            // Delete user
+            userRepository.deleteById(userId);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "User deleted successfully");
-        return ResponseEntity.ok(response);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // Log internally but return generic message
+            System.err.println("Error deleting user: " + e.getMessage());
+            return ResponseEntity.status(500).body("Failed to delete user");
+        }
     }
 
     @GetMapping("/users/{userId}/details")

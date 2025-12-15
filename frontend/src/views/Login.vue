@@ -73,10 +73,8 @@ export default {
           email: response.data.email
         }))
         
-        // Force navigation with proper redirect
+        // Navigate to home page - navbar will update via computed property
         await this.$router.push('/')
-        // Reload to ensure navbar updates
-        window.location.reload()
       } catch (error) {
         this.error = error.response?.data || '登录失败，请检查用户名和密码'
       } finally {

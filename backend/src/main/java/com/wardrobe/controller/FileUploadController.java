@@ -70,8 +70,10 @@ public class FileUploadController {
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
+            // Log error internally
+            System.err.println("File upload error: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Failed to upload file: " + e.getMessage());
+            return ResponseEntity.status(500).body("Failed to upload file. Please try again.");
         }
     }
 
@@ -92,8 +94,10 @@ public class FileUploadController {
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
+            // Log error internally
+            System.err.println("File deletion error: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Failed to delete file: " + e.getMessage());
+            return ResponseEntity.status(500).body("Failed to delete file. Please try again.");
         }
     }
 }
