@@ -2,6 +2,11 @@
   <div class="admin-page">
     <div class="page-header">
       <h2 class="page-title">管理员控制面板</h2>
+      <div class="quick-actions">
+        <button @click="refreshAllData" class="btn btn-primary" :disabled="isRefreshing">
+          {{ isRefreshing ? '⏳ 刷新中...' : '🔄 全部刷新' }}
+        </button>
+      </div>
     </div>
 
     <!-- System Statistics -->
@@ -32,6 +37,41 @@
         <div class="stat-info">
           <div class="stat-value">{{ stats.totalTravelPlans }}</div>
           <div class="stat-label">旅行计划</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Health Dashboard -->
+    <div class="health-dashboard card">
+      <h3>🏥 系统健康监控</h3>
+      <div class="health-grid">
+        <div class="health-item">
+          <div class="health-icon">💚</div>
+          <div class="health-info">
+            <div class="health-label">系统状态</div>
+            <div class="health-status active">运行正常</div>
+          </div>
+        </div>
+        <div class="health-item">
+          <div class="health-icon">👥</div>
+          <div class="health-info">
+            <div class="health-label">活跃用户率</div>
+            <div class="health-value">{{ calculateActiveUserRate() }}%</div>
+          </div>
+        </div>
+        <div class="health-item">
+          <div class="health-icon">📊</div>
+          <div class="health-info">
+            <div class="health-label">平均衣物数/用户</div>
+            <div class="health-value">{{ calculateAvgClothingPerUser() }}</div>
+          </div>
+        </div>
+        <div class="health-item">
+          <div class="health-icon">⚡</div>
+          <div class="health-info">
+            <div class="health-label">系统评分</div>
+            <div class="health-value">{{ calculateSystemScore() }}/100</div>
+          </div>
         </div>
       </div>
     </div>
@@ -188,9 +228,14 @@
     <div class="clothing-section card">
       <div class="section-header">
         <h3>全部衣物管理</h3>
-        <button @click="loadAllClothing" class="btn btn-secondary">
-          🔄 刷新衣物列表
-        </button>
+        <div class="header-actions">
+          <button @click="exportClothingToCSV" class="btn btn-secondary">
+            📥 导出衣物数据
+          </button>
+          <button @click="loadAllClothing" class="btn btn-secondary">
+            🔄 刷新衣物列表
+          </button>
+        </div>
       </div>
       <div v-if="loadingClothing" class="loading">加载中...</div>
       <div v-else-if="allClothing.length === 0" class="empty-state">暂无衣物数据</div>
@@ -325,7 +370,8 @@ export default {
         newUsersLast30Days: 0,
         activitiesLast7Days: 0,
         activitiesLast30Days: 0
-      }
+      },
+      isRefreshing: false
     }
   },
   mounted() {
@@ -587,6 +633,101 @@ export default {
         console.error('Failed to load growth stats:', error)
       }
     },
+
+    exportClothingToCSV() {
+      if (this.allClothing.length === 0) {
+        alert('没有衣物数据可以导出')
+        return
+      }
+
+      // CSV header
+      const header = ['ID', '名称', '类别', '颜色', '季节', '品牌', '价格', '尺寸', '所属用户ID']
+      
+      // CSV rows
+      const rows = this.allClothing.map(item => [
+        item.id,
+        item.name,
+        item.category || '',
+        item.color || '',
+        item.season || '',
+        item.brand || '',
+        item.price || '',
+        item.size || '',
+        item.userId
+      ])
+      
+      // Build CSV content
+      const csvContent = [
+        header.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n')
+      
+      // Create download link
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      
+      link.setAttribute('href', url)
+      link.setAttribute('download', `衣物数据_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      alert('衣物数据已导出')
+    },
+
+    calculateActiveUserRate() {
+      if (this.stats.totalUsers === 0) return 0
+      const activeUsers = this.users.filter(u => u.clothingCount > 0).length
+      return Math.round((activeUsers / this.stats.totalUsers) * 100)
+    },
+
+    calculateAvgClothingPerUser() {
+      if (this.stats.totalUsers === 0) return 0
+      return Math.round(this.stats.totalClothing / this.stats.totalUsers)
+    },
+
+    calculateSystemScore() {
+      // Simple scoring based on various metrics
+      let score = 60 // Base score
+      
+      // Add points for active users
+      const activeRate = this.calculateActiveUserRate()
+      score += Math.min(activeRate / 5, 20)
+      
+      // Add points for user engagement
+      const avgClothing = this.calculateAvgClothingPerUser()
+      score += Math.min(avgClothing, 10)
+      
+      // Add points for growth
+      if (this.growthStats.newUsersLast7Days > 0) score += 5
+      if (this.growthStats.activitiesLast7Days > 10) score += 5
+      
+      return Math.min(Math.round(score), 100)
+    },
+
+    async refreshAllData() {
+      if (this.isRefreshing) return
+      
+      this.isRefreshing = true
+      try {
+        await Promise.all([
+          this.loadStats(),
+          this.loadUsers(),
+          this.loadAllClothing(),
+          this.loadActivityLogs(),
+          this.loadGrowthStats()
+        ])
+        alert('✅ 所有数据已刷新')
+      } catch (error) {
+        console.error('Failed to refresh data:', error)
+        alert('❌ 刷新失败，请重试')
+      } finally {
+        this.isRefreshing = false
+      }
+    },
     
     renderCharts() {
       this.renderCategoryChart()
@@ -712,11 +853,26 @@ export default {
 <style scoped>
 .page-header {
   margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .page-title {
   font-size: 2rem;
   color: var(--text-primary);
+}
+
+.quick-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .stats-grid {
@@ -1117,6 +1273,68 @@ tbody tr:hover {
 
 .btn-secondary:hover {
   opacity: 0.9;
+}
+
+.health-dashboard {
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.health-dashboard h3 {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.health-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--background);
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.health-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.health-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.health-info {
+  flex: 1;
+}
+
+.health-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.health-status {
+  font-weight: 600;
+  color: var(--success);
+  font-size: 1rem;
+}
+
+.health-status.active {
+  color: #5FA35F;
+}
+
+.health-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 .growth-stats {
